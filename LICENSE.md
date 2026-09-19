@@ -1,4 +1,4 @@
-# Cyclone — Proprietary Non-Commercial Redistribution License
+# Sinkhole — Proprietary Non-Commercial Redistribution License
 
 Copyright (c) 2026 math.huge
 
@@ -6,7 +6,7 @@ All rights reserved.
 
 ## 1. Source Code
 
-The source code of Cyclone is proprietary and closed source.
+The source code of Sinkhole is proprietary and closed source.
 
 No permission is granted to copy, reproduce, modify, adapt, translate, reverse engineer, incorporate, sublicense, publish, or create derivative works from the source code, except where expressly permitted by applicable law.
 
@@ -14,7 +14,7 @@ The source code may not be redistributed or made available to third parties with
 
 ## 2. Binary Redistribution
 
-Permission is granted to anyone to freely redistribute **unmodified compiled copies** of Cyclone.
+Permission is granted to anyone to freely redistribute **unmodified compiled copies** of Sinkhole.
 
 This permission is worldwide and includes, but is not limited to:
 
@@ -34,11 +34,11 @@ There is no limit on the number of people or copies to which the software may be
 
 Binary redistribution must be **non-commercial**.
 
-You may not sell, rent, lease, license, or otherwise provide Cyclone in exchange for money or other commercial compensation.
+You may not sell, rent, lease, license, or otherwise provide Sinkhole in exchange for money or other commercial compensation.
 
-You may not charge a fee specifically for access to, possession of, or distribution of Cyclone.
+You may not charge a fee specifically for access to, possession of, or distribution of Sinkhole.
 
-You may not bundle Cyclone with a paid product or service for the purpose of generating revenue from the software without explicit written permission from the copyright holder.
+You may not bundle Sinkhole with a paid product or service for the purpose of generating revenue from the software without explicit written permission from the copyright holder.
 
 Free redistribution remains permitted regardless of the size of the audience or community receiving the software.
 
@@ -72,7 +72,7 @@ Any rights granted under this license terminate automatically upon violation of 
 
 ## 9. Acceptance
 
-By using or redistributing Cyclone, you acknowledge and agree to the terms of this license.
+By using or redistributing Sinkhole, you acknowledge and agree to the terms of this license.
 
 Copyright (c) 2026 math.huge
 
