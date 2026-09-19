@@ -1,6 +1,6 @@
 # Sinkhole
 
-<img align="right" width="540" alt="Sinkhole preview" src="images/preview.png">
+<img align="right" width="540" alt="Sinkhole preview" src="images/sinkholepreview.png">
 
 A closed-source Luau executor for Vortex.
 
