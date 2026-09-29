@@ -224,23 +224,23 @@ local function fse_decode(br, dt, state)
 end
 
 local function decode_sequences(data, seq_start, seq_size)
-    local bw = br_new(sub(data, seq_start, seq_start + seq_size - 1))
-    local b0 = bw:read(8)
+    local p = seq_start
+    local b0 = byte(data, p); p = p + 1
     local nbseq
     if b0 == 0 then
         return {}
     elseif b0 < 128 then
         nbseq = b0
     elseif b0 < 255 then
-        local b1 = bw:read(8)
+        local b1 = byte(data, p); p = p + 1
         nbseq = lshift(b0 - 128, 8) + b1
     else
-        local b1 = bw:read(8)
-        local b2 = bw:read(8)
+        local b1 = byte(data, p); p = p + 1
+        local b2 = byte(data, p); p = p + 1
         nbseq = b1 + lshift(b2, 8) + 0x7F00
     end
 
-    local modes = bw:read(8)
+    local modes = byte(data, p); p = p + 1
     local ll_mode = band(modes, 0x3)
     local of_mode = band(rshift(modes, 2), 0x3)
     local ml_mode = band(rshift(modes, 4), 0x3)
@@ -249,6 +249,9 @@ local function decode_sequences(data, seq_start, seq_size)
         error("custom FSE tables not supported")
     end
 
+    local bitstream = sub(data, p, seq_start + seq_size - 1)
+    local bw = br_new(bitstream)
+
     local sLL = fse_init_d(bw, LL_DT)
     local sOF = fse_init_d(bw, OF_DT)
     local sML = fse_init_d(bw, ML_DT)
@@ -256,7 +259,6 @@ local function decode_sequences(data, seq_start, seq_size)
     local seqs = {}
     for i = 1, nbseq do
         local ll_sym, ml_sym, of_sym
-
         ll_sym, sLL = fse_decode(bw, LL_DT, sLL)
         ml_sym, sML = fse_decode(bw, ML_DT, sML)
         of_sym, sOF = fse_decode(bw, OF_DT, sOF)
