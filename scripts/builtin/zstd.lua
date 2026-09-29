@@ -90,10 +90,17 @@ local function ll_code(ll)
     for i = 35, 0, -1 do if ll >= LL_BASE[i + 1] then return i end end
     return 0
 end
-local function ml_code(ml)
-    for i = 52, 0, -1 do if ml >= ML_BASE[i + 1] then return i end end
+
+local function ml_code(mlv)
+    for i = 52, 0, -1 do
+        local base = ML_BASE[i + 1] - 3
+        if mlv >= base and mlv < base + lshift(1, ML_BITS[i + 1]) then
+            return i
+        end
+    end
     return 0
 end
+
 local function of_code(v)
     for i = 31, 0, -1 do
         local base = OF_BASE[i + 1]
@@ -313,11 +320,9 @@ local function decode_compressed_block(data, pos, size, out)
             work = work .. sub(literals, litpos, litpos + s.ll - 1)
             litpos = litpos + s.ll
         end
-        if s.ml > 0 then
-            local src_start = #work - s.of
-            for j = 0, s.ml - 1 do
-                work = work .. sub(work, src_start + j, src_start + j)
-            end
+        local src_start = #work - s.of
+        for j = 0, s.ml - 1 do
+            work = work .. sub(work, src_start + j, src_start + j)
         end
     end
     work = work .. sub(literals, litpos)
@@ -458,7 +463,7 @@ local function encode_nbseq(n)
     return char(0xFF, band(v, 0xFF), band(rshift(v, 8), 0xFF))
 end
 
-local function encode_sequences(seqs, tail_lit)
+local function encode_sequences(seqs)
     local ns = #seqs
     if ns == 0 then return char(0) end
     local out = { encode_nbseq(ns), char(0) }
@@ -467,9 +472,8 @@ local function encode_sequences(seqs, tail_lit)
     local llv, mlv, ofv = {}, {}, {}
     for i = 1, ns do
         local s = seqs[i]
-        local ll = s.ll + (i == ns and tail_lit or 0)
-        llv[i], mlv[i], ofv[i] = ll, s.ml, s.of
-        llc[i] = ll_code(ll)
+        llv[i], mlv[i], ofv[i] = s.ll, s.ml, s.of
+        llc[i] = ll_code(s.ll)
         mlc[i] = ml_code(s.ml)
         ofc[i] = of_code(s.of)
     end
@@ -477,14 +481,14 @@ local function encode_sequences(seqs, tail_lit)
     local sML = fse_init_c(ML_CT, mlc[ns])
     local sOF = fse_init_c(OF_CT, ofc[ns])
     bw:add(llv[ns] - LL_BASE[llc[ns] + 1], LL_BITS[llc[ns] + 1])
-    bw:add(mlv[ns] - ML_BASE[mlc[ns] + 1], ML_BITS[mlc[ns] + 1])
+    bw:add(mlv[ns] + 3 - ML_BASE[mlc[ns] + 1], ML_BITS[mlc[ns] + 1])
     bw:add(ofv[ns] - OF_BASE[ofc[ns] + 1], ofc[ns])
     fse_enc_c(bw, sOF, ofc[ns])
     fse_enc_c(bw, sML, mlc[ns])
     fse_enc_c(bw, sLL, llc[ns])
     for i = ns - 1, 1, -1 do
         bw:add(llv[i] - LL_BASE[llc[i] + 1], LL_BITS[llc[i] + 1])
-        bw:add(mlv[i] - ML_BASE[mlc[i] + 1], ML_BITS[mlc[i] + 1])
+        bw:add(mlv[i] + 3 - ML_BASE[mlc[i] + 1], ML_BITS[mlc[i] + 1])
         bw:add(ofv[i] - OF_BASE[ofc[i] + 1], ofc[i])
         fse_enc_c(bw, sOF, ofc[i])
         fse_enc_c(bw, sML, mlc[i])
@@ -523,7 +527,7 @@ local function encode_compressed_block(src, is_last)
     end
     lit[#lit + 1] = tail
     local litstr = concat(lit)
-    local body = encode_raw_literals(litstr) .. encode_sequences(seqs, #tail)
+    local body = encode_raw_literals(litstr) .. encode_sequences(seqs)
     local size = #body
     local hdr = bor(bor((is_last and 1 or 0), lshift(2, 1)), lshift(size, 3))
     return char(band(hdr, 0xFF), band(rshift(hdr, 8), 0xFF), band(rshift(hdr, 16), 0xFF)) .. body
