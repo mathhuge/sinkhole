@@ -48,14 +48,14 @@ end
 
 local BW = {}
 BW.__index = BW
-local function bw_new() return setmetatable({ b = {}, a = 0, n = 0 }, BW) end
+local function bw_new() return setmetatable({ b = {}, bi = 0, a = 0, n = 0 }, BW) end
 function BW:add(v, k)
     if k <= 0 then return end
     self.a = bor(self.a, lshift(band(v, lshift(1, k) - 1), self.n))
     self.n = self.n + k
     while self.n >= 8 do
-        self.b = self.b + 1
-        self.b[self.b] = char(band(self.a, 0xFF))
+        self.bi = self.bi + 1
+        self.b[self.bi] = char(band(self.a, 0xFF))
         self.a = rshift(self.a, 8)
         self.n = self.n - 8
     end
@@ -63,8 +63,8 @@ end
 function BW:close()
     self:add(1, 1)
     while self.n > 0 do
-        self.b = self.b + 1
-        self.b[self.b] = char(band(self.a, 0xFF))
+        self.bi = self.bi + 1
+        self.b[self.bi] = char(band(self.a, 0xFF))
         self.a = rshift(self.a, 8)
         self.n = self.n - 8
     end
