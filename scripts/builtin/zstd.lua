@@ -551,21 +551,18 @@ local function encode_frame(src)
         t = rshift(t, 8)
     end
     parts[#parts + 1] = concat(fcs)
-    if n < 128 * 1024 then
-        local blk = encode_compressed_block(src, true)
-        if blk and #blk < #src + 3 then
-            parts[#parts + 1] = blk
-        else
-            parts[#parts + 1] = encode_raw_block(src, true)
+
+    local pos = 1
+    while pos <= n do
+        local sz = math.min(128 * 1024, n - pos + 1)
+        local last = (pos + sz - 1 == n)
+        local chunk = sub(src, pos, pos + sz - 1)
+        local blk = encode_compressed_block(chunk, last)
+        if not blk or #blk >= #chunk + 3 then
+            blk = encode_raw_block(chunk, last)
         end
-    else
-        local pos = 1
-        while pos <= n do
-            local sz = math.min(128 * 1024, n - pos + 1)
-            local last = (pos + sz - 1 == n)
-            parts[#parts + 1] = encode_raw_block(sub(src, pos, pos + sz - 1), last)
-            pos = pos + sz
-        end
+        parts[#parts + 1] = blk
+        pos = pos + sz
     end
     return concat(parts)
 end
