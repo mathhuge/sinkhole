@@ -1,4 +1,4 @@
-local bit32 = loadstring(fetchurl('https://raw.githubusercontent.com/mathhuge/sinkhole/refs/heads/main/scripts/builtin/bit32.lua'))()
+local bit32 = ...
 
 local band = bit32.band
 local bor = bit32.bor
@@ -85,7 +85,6 @@ local LL_BITS = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,3,4,6,7,8,9,10,11
 local ML_BASE = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,37,39,41,43,47,51,59,67,83,99,131,259,515,1027,2051,4099,8195,16387,32771,65539}
 local ML_BITS = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,3,4,4,5,7,8,9,10,11,12,13,14,15,16}
 local OF_BASE = {0, 1, 1, 5, 13, 29, 61, 125, 253, 509, 1021, 2045, 4093, 8189, 16381, 32765, 65533, 131069, 262141, 524285, 1048573, 2097149, 4194301, 8388605, 16777213, 33554429, 67108861, 134217725, 268435453, 536870909, 1073741821, 2147483645}
-local OF_BITS = {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7}
 
 local function ll_code(ll)
     for i = 35, 0, -1 do if ll >= LL_BASE[i + 1] then return i end end
@@ -96,7 +95,12 @@ local function ml_code(ml)
     return 0
 end
 local function of_code(v)
-    for i = 31, 0, -1 do if OF_BASE[i + 1] <= v then return i end end
+    for i = 31, 0, -1 do
+        local base = OF_BASE[i + 1]
+        if base <= v and v < base + lshift(1, i) then
+            return i
+        end
+    end
     return 0
 end
 
@@ -251,14 +255,15 @@ local function decode_sequences(data, seq_start, seq_size)
 
     local seqs = {}
     for i = 1, nbseq do
-        local ll_sym, of_sym, ml_sym
-        ll_sym, sLL = fse_decode(bw, LL_DT, sLL)
-        of_sym, sOF = fse_decode(bw, OF_DT, sOF)
-        ml_sym, sML = fse_decode(bw, ML_DT, sML)
+        local ll_sym, ml_sym, of_sym
 
-        local ll = LL_BASE[ll_sym + 1] + bw:read(LL_BITS[ll_sym + 1])
+        ll_sym, sLL = fse_decode(bw, LL_DT, sLL)
+        ml_sym, sML = fse_decode(bw, ML_DT, sML)
+        of_sym, sOF = fse_decode(bw, OF_DT, sOF)
+
+        local of = OF_BASE[of_sym + 1] + bw:read(of_sym)
         local ml = ML_BASE[ml_sym + 1] + bw:read(ML_BITS[ml_sym + 1])
-        local of = OF_BASE[of_sym + 1] + bw:read(OF_BITS[of_sym + 1])
+        local ll = LL_BASE[ll_sym + 1] + bw:read(LL_BITS[ll_sym + 1])
 
         seqs[i] = { ll = ll, ml = ml, of = of }
     end
@@ -471,14 +476,14 @@ local function encode_sequences(seqs, tail_lit)
     local sOF = fse_init_c(OF_CT, ofc[ns])
     bw:add(llv[ns] - LL_BASE[llc[ns] + 1], LL_BITS[llc[ns] + 1])
     bw:add(mlv[ns] - ML_BASE[mlc[ns] + 1], ML_BITS[mlc[ns] + 1])
-    bw:add(ofv[ns] - OF_BASE[ofc[ns] + 1], OF_BITS[ofc[ns] + 1])
+    bw:add(ofv[ns] - OF_BASE[ofc[ns] + 1], ofc[ns])
     fse_enc_c(bw, sOF, ofc[ns])
     fse_enc_c(bw, sML, mlc[ns])
     fse_enc_c(bw, sLL, llc[ns])
     for i = ns - 1, 1, -1 do
         bw:add(llv[i] - LL_BASE[llc[i] + 1], LL_BITS[llc[i] + 1])
         bw:add(mlv[i] - ML_BASE[mlc[i] + 1], ML_BITS[mlc[i] + 1])
-        bw:add(ofv[i] - OF_BASE[ofc[i] + 1], OF_BITS[ofc[i] + 1])
+        bw:add(ofv[i] - OF_BASE[ofc[i] + 1], ofc[i])
         fse_enc_c(bw, sOF, ofc[i])
         fse_enc_c(bw, sML, mlc[i])
         fse_enc_c(bw, sLL, llc[i])
