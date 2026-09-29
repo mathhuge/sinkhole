@@ -1,4 +1,4 @@
-local bit32 = ...
+local bit32 = loadstring(fetchurl('https://raw.githubusercontent.com/mathhuge/sinkhole/refs/heads/main/scripts/builtin/bit32.lua'))()
 
 local band = bit32.band
 local bor = bit32.bor
