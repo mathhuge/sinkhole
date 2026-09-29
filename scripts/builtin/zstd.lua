@@ -102,7 +102,8 @@ local function build_ctable(dist, max_sym, table_log)
     local sym = {}
     for i = 1, T do sym[i] = 0 end
     local hi = T - 1
-    local cum = { 0 }
+    local cum = {}
+    cum[0] = 0
     for u = 1, max_sym + 1 do
         local c = dist[u]
         if c == -1 then
